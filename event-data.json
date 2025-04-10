@@ -1,3 +1,6 @@
 {
-  "firstName": "Fox"
+  "tenant": "tenant-001",
+  "product_sku": "storage",
+  "used_amount": 512.0,
+  "use_unit": "KB"
 }
