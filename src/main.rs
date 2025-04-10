@@ -19,8 +19,12 @@ async fn main() -> Result<(), Error> {
 }
 
 async fn func(event: LambdaEvent<Value>) -> Result<Value, Error> {
-    let (event, _context) = event.into_parts();
-    let first_name = event["firstName"].as_str().unwrap_or("world");
-
-    Ok(json!({ "message": format!("Hello, {}!", first_name) }))
+    let event_data: EventData = match serde_json::from_str(&event.payload.to_string()) {
+        Ok(data) => data,
+        Err(error) => {
+            println!("Warning: Error deserializing event data: {:?}", error);
+            return Ok(json!({ "message": "Error processing request" }));
+        }
+    };
+    Ok(json!({ "message": format!("Hello, {}!", event_data.tenant) }))
 }
