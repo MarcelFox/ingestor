@@ -46,13 +46,17 @@ async fn main() -> Result<(), Error> {
 const ONE_HOUR: i64 = 3600;
 
 async fn func(event: LambdaEvent<PulseData>) -> Result<Value, Error> {
-    let pulse_data = event.payload;
-    let usage_key = format!(
-        "USAGE:{}:{}:{}",
+    let pulse_data: PulseData = event.payload;
+
+    let pulse_info = format!(
+        "{}:{}:{}",
         pulse_data.tenant, pulse_data.product_sku, pulse_data.use_unit
     );
-    let timestamp_key = format!("TIMESTAMP:{}:{}", pulse_data.tenant, pulse_data.product_sku);
+    let usage_key = format!("USAGE:{}", pulse_info);
+    let timestamp_key = format!("TIMESTAMP:{}", pulse_info);
+
     let found_timestamp_key = services::redis::scan_keys(timestamp_key.clone());
+
     if found_timestamp_key.is_empty() {
         services::redis::set_key_value(timestamp_key, Utc::now().to_rfc3339().to_string());
         services::redis::set_key_value(usage_key.clone(), pulse_data.used_amount.to_string());
@@ -70,6 +74,7 @@ async fn func(event: LambdaEvent<PulseData>) -> Result<Value, Error> {
             return Ok(json!({"message": "Passed 1 hour since last update"}));
         }
     }
+
     let redis_result = services::redis::get_key_value(usage_key);
     let message = format!(
         "Usage amount from tenant '{}' on SKU '{}' has increased to {}",
