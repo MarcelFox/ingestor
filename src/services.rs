@@ -46,3 +46,29 @@ pub mod redis {
         };
     }
 }
+
+pub mod rabbimq {
+    use amqp::{Basic, Session, Table};
+    // use std::default::Default;
+
+    pub fn send_message(queue_name: &str, message: &str) {
+        let mut session = Session::open_url("amqp://admin:admin@localhost:5672").unwrap();
+        let mut channel = session.open_channel(1).unwrap();
+
+        channel
+            .queue_declare(queue_name, false, true, false, false, false, Table::new())
+            .unwrap();
+
+        channel.basic_publish(
+            "",
+            queue_name,
+            true,
+            false,
+            amqp::protocol::basic::BasicProperties {
+                content_type: Some("text".to_string()),
+                ..Default::default()
+            },
+            message.as_bytes().to_vec(),
+        ).unwrap();
+    }
+}
