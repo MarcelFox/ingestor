@@ -45,6 +45,23 @@ async fn main() -> Result<(), Error> {
 
 const ONE_HOUR: i64 = 3600;
 
+fn create_new_entry(timestamp_key: String, key: String, value: String) {
+    services::redis::set_key_value(timestamp_key, Utc::now().to_rfc3339().to_string());
+    services::redis::set_key_value(key, value);
+}
+
+fn an_hour_has_passed(found_timestamp_key: String) -> bool {
+    let found_timestamp: String = services::redis::get_key_value(found_timestamp_key.clone());
+    let timestamp: DateTime<Utc> = DateTime::parse_from_rfc3339(&found_timestamp)
+        .unwrap()
+        .with_timezone(&Utc);
+    let elapsed_time = Utc::now().timestamp() - timestamp.timestamp();
+    if elapsed_time > ONE_HOUR {
+        return true;
+    }
+    return false;
+}
+
 async fn func(event: LambdaEvent<PulseData>) -> Result<Value, Error> {
     let pulse_data: PulseData = event.payload;
 
@@ -58,20 +75,16 @@ async fn func(event: LambdaEvent<PulseData>) -> Result<Value, Error> {
     let found_timestamp_key = services::redis::scan_keys(timestamp_key.clone());
 
     if found_timestamp_key.is_empty() {
-        services::redis::set_key_value(timestamp_key, Utc::now().to_rfc3339().to_string());
-        services::redis::set_key_value(usage_key.clone(), pulse_data.used_amount.to_string());
+        create_new_entry(
+            timestamp_key,
+            usage_key.clone(),
+            pulse_data.used_amount.to_string(),
+        );
     } else {
-        let found_timestamp: String = services::redis::get_key_value(found_timestamp_key.clone());
-        let timestamp: DateTime<Utc> = DateTime::parse_from_rfc3339(&found_timestamp)
-            .unwrap()
-            .with_timezone(&Utc);
         services::redis::increment_key(usage_key.clone(), pulse_data.used_amount.to_string());
-        let elapsed_time = Utc::now().timestamp() - timestamp.timestamp();
-
-        if elapsed_time > ONE_HOUR {
+        if an_hour_has_passed(found_timestamp_key.clone()) {
             println!("Sending Message!");
             services::redis::delete_key(found_timestamp_key);
-            return Ok(json!({"message": "Passed 1 hour since last update"}));
         }
     }
 
