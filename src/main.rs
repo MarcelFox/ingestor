@@ -8,12 +8,31 @@ use std::f64;
 mod services;
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum UseUnit {
+    Cpu,
+    Memory,
+    Storage,
+}
+
+#[derive(Serialize, Deserialize)]
 struct PulseData {
     tenant: String,
     product_sku: String,
     used_amount: f64,
-    use_unit: String,
+    use_unit: UseUnit,
     timestamp: Option<String>,
+}
+
+impl fmt::Display for UseUnit {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let s = match self {
+            UseUnit::Cpu => "cpu",
+            UseUnit::Memory => "memory",
+            UseUnit::Storage => "storage",
+        };
+        write!(f, "{}", s)
+    }
 }
 
 #[tokio::main]
