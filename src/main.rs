@@ -14,6 +14,7 @@ async fn main() -> Result<(), Error> {
 }
 
 const ONE_HOUR: i64 = 3600;
+const QUEUE_NAME: &str = "pulse_queue";
 
 fn create_new_entry(timestamp_key: String, key: String, value: String) {
     services::redis::set_key_value(timestamp_key, Utc::now().to_rfc3339().to_string());
@@ -53,7 +54,15 @@ async fn func(event: LambdaEvent<PulseData>) -> Result<Value, Error> {
     } else {
         services::redis::increment_key(usage_key.clone(), pulse_data.used_amount.to_string());
         if an_hour_has_passed(found_timestamp_key.clone()) {
-            println!("Sending Message!");
+            services::rabbimq::send_message(
+                QUEUE_NAME,
+                format!(
+                    "{}:{}",
+                    usage_key.clone(),
+                    services::redis::get_key_value(usage_key.clone()),
+                )
+                .as_str(),
+            );
             services::redis::delete_key(found_timestamp_key);
         }
     }
