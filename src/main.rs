@@ -4,6 +4,7 @@ use serde::Deserialize;
 use serde::Serialize;
 use serde_json::{json, Value};
 use std::f64;
+use std::fmt;
 
 mod services;
 
