@@ -1,40 +1,10 @@
-use chrono::{DateTime, Utc};
-use lambda_runtime::{service_fn, Error, LambdaEvent};
-use serde::Deserialize;
-use serde::Serialize;
-use serde_json::{json, Value};
-use std::f64;
-use std::fmt;
-
+mod interfaces;
 mod services;
 
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum UseUnit {
-    Cpu,
-    Memory,
-    Storage,
-}
-
-#[derive(Serialize, Deserialize)]
-struct PulseData {
-    tenant: String,
-    product_sku: String,
-    used_amount: f64,
-    use_unit: UseUnit,
-    timestamp: Option<String>,
-}
-
-impl fmt::Display for UseUnit {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let s = match self {
-            UseUnit::Cpu => "cpu",
-            UseUnit::Memory => "memory",
-            UseUnit::Storage => "storage",
-        };
-        write!(f, "{}", s)
-    }
-}
+use crate::interfaces::PulseData;
+use chrono::{DateTime, Utc};
+use lambda_runtime::{service_fn, Error, LambdaEvent};
+use serde_json::{json, Value};
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
