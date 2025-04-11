@@ -26,7 +26,6 @@ async fn main() -> Result<(), Error> {
 const ONE_HOUR: i64 = 3600;
 
 async fn func(event: LambdaEvent<PulseData>) -> Result<Value, Error> {
-    services::redis::hello();
     let pulse_data = event.payload;
     let usage_key = format!(
         "USAGE:{}:{}:{}",
