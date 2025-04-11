@@ -1,13 +1,16 @@
-use lambda_runtime::{service_fn, LambdaEvent, Error};
-use serde::Serialize;
+use lambda_runtime::{service_fn, Error, LambdaEvent};
 use serde::Deserialize;
+use serde::Serialize;
 use serde_json::{json, Value};
+use std::f64;
 
-#[derive(Deserialize, Serialize)]
-struct EventData {
+mod services;
+
+#[derive(Serialize, Deserialize)]
+struct PulseData {
     tenant: String,
     product_sku: String,
-    used_amount: f32,
+    used_amount: f64,
     use_unit: String,
 }
 
@@ -18,13 +21,17 @@ async fn main() -> Result<(), Error> {
     Ok(())
 }
 
-async fn func(event: LambdaEvent<Value>) -> Result<Value, Error> {
-    let event_data: EventData = match serde_json::from_str(&event.payload.to_string()) {
-        Ok(data) => data,
-        Err(error) => {
-            println!("Warning: Error deserializing event data: {:?}", error);
-            return Ok(json!({ "message": "Error processing request" }));
-        }
-    };
-    Ok(json!({ "message": format!("Hello, {}!", event_data.tenant) }))
+async fn func(event: LambdaEvent<PulseData>) -> Result<Value, Error> {
+    services::redis::hello();
+    let pulse_data = event.payload;
+    let key_name = format!(
+        "USAGE:{}:{}:{}",
+        pulse_data.tenant, pulse_data.product_sku, pulse_data.use_unit
+    );
+    let redis_result = services::redis::set_key_value(key_name, pulse_data.used_amount);
+    let message = format!(
+        "Usage amount from tenant '{}' on SKU '{}' has increased to {}",
+        pulse_data.tenant, pulse_data.product_sku, redis_result
+    );
+    return Ok(json!({"message": message}));
 }
