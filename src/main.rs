@@ -16,7 +16,7 @@ async fn main() -> Result<(), Error> {
 const ONE_HOUR: i64 = 3600;
 const QUEUE_NAME: &str = "pulse_queue";
 
-fn create_new_entry(timestamp_key: String, key: String, value: String) {
+fn create_new_entry_on_redis(timestamp_key: String, key: String, value: String) {
     services::redis::set_key_value(timestamp_key, Utc::now().to_rfc3339().to_string());
     services::redis::set_key_value(key, value);
 }
@@ -46,7 +46,7 @@ async fn func(event: LambdaEvent<PulseData>) -> Result<Value, Error> {
     let found_timestamp_key = services::redis::scan_keys(timestamp_key.clone());
 
     if found_timestamp_key.is_empty() {
-        create_new_entry(
+        create_new_entry_on_redis(
             timestamp_key,
             usage_key.clone(),
             pulse_data.used_amount.to_string(),
