@@ -8,6 +8,13 @@ ingestor is a Rust project that implements an AWS Lambda function in Rust.
 - [Cargo Lambda](https://www.cargo-lambda.info/guide/installation.html)
 - [zig](https://ziglang.org/download/) (for building the project)
 
+### Docker network
+You need to create a Docker network for the project to work. Run the following command:
+
+```bash
+docker network create shared_network
+```
+
 ## Building
 
 To build the project for production, run `cargo lambda build --release`. Remove the `--release` flag to build for development.
