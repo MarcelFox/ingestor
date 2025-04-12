@@ -1,6 +1,9 @@
 mod interfaces;
 mod services;
 
+use std::env;
+use log::LevelFilter;
+use simple_logger::SimpleLogger;
 use crate::interfaces::PulseData;
 use chrono::{DateTime, Utc};
 use lambda_runtime::{service_fn, Error, LambdaEvent};
@@ -8,6 +11,8 @@ use serde_json::{json, Value};
 
 #[tokio::main]
 async fn main() -> Result<(), Error> {
+    SimpleLogger::new().with_level(LevelFilter::Info).init().unwrap();
+    log::info!("Pulse received");
     let func = service_fn(func);
     lambda_runtime::run(func).await?;
     Ok(())
