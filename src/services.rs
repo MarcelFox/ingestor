@@ -59,16 +59,18 @@ pub mod rabbimq {
             .queue_declare(queue_name, false, true, false, false, false, Table::new())
             .unwrap();
 
-        channel.basic_publish(
-            "",
-            queue_name,
-            true,
-            false,
-            amqp::protocol::basic::BasicProperties {
-                content_type: Some("text".to_string()),
-                ..Default::default()
-            },
-            message.as_bytes().to_vec(),
-        ).unwrap();
+        channel
+            .basic_publish(
+                "",
+                queue_name,
+                true,
+                false,
+                amqp::protocol::basic::BasicProperties {
+                    content_type: Some("text".to_string()),
+                    ..Default::default()
+                },
+                message.as_bytes().to_vec(),
+            )
+            .unwrap();
     }
 }
