@@ -13,7 +13,6 @@ async fn main() -> Result<(), Error> {
     Ok(())
 }
 
-const ONE_HOUR: i64 = 3600;
 const QUEUE_NAME: &str = "pulse_queue";
 
 fn create_new_entry_on_redis(timestamp_key: String, key: String, value: String) {
@@ -22,12 +21,16 @@ fn create_new_entry_on_redis(timestamp_key: String, key: String, value: String) 
 }
 
 fn an_hour_has_passed(found_timestamp_key: String) -> bool {
+    let redis_entry_ttl: i64 = env::var("REDIS_ENTRY_TTL")
+        .unwrap_or("3600".to_string())
+        .parse()
+        .unwrap();
     let found_timestamp: String = services::redis::get_key_value(found_timestamp_key.clone());
     let timestamp: DateTime<Utc> = DateTime::parse_from_rfc3339(&found_timestamp)
         .unwrap()
         .with_timezone(&Utc);
     let elapsed_time = Utc::now().timestamp() - timestamp.timestamp();
-    if elapsed_time > ONE_HOUR {
+    if elapsed_time > redis_entry_ttl {
         return true;
     }
     return false;
