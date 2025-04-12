@@ -5,6 +5,8 @@ services:
       dockerfile: Dockerfile
     environment:
       - RUST_BACKTRACE=1
+      - REDIS_URL=redis://redis:6379/
+      - RABBITMQ_URL=amqp://admin:admin@rabbitmq:5672
       - AWS_LAMBDA_RUNTIME_API=localhost:8080
       - AWS_LAMBDA_FUNCTION_NAME=rust_lambda_fn
       - AWS_LAMBDA_FUNCTION_MEMORY_SIZE=512

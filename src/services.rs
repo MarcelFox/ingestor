@@ -1,8 +1,11 @@
 pub mod redis {
     use redis::Commands;
+    use std::env;
 
     fn get_connection() -> redis::Connection {
-        let client = redis::Client::open("redis://0.0.0.0:6379/").unwrap();
+        let redis_url: String =
+            env::var("REDIS_URL").unwrap_or("redis://localhost:6379/".to_string());
+        let client = redis::Client::open(redis_url).unwrap();
         let connection = client.get_connection().unwrap();
         return connection;
     }
@@ -49,10 +52,12 @@ pub mod redis {
 
 pub mod rabbimq {
     use amqp::{Basic, Session, Table};
-    // use std::default::Default;
+    use std::env;
 
     pub fn send_message(queue_name: &str, message: &str) {
-        let mut session = Session::open_url("amqp://admin:admin@localhost:5672").unwrap();
+        let rabbit_url: String =
+            env::var("RABBITMQ_URL").unwrap_or("amqp://admin:admin@localhost:5672".to_string());
+        let mut session = Session::open_url(&rabbit_url).unwrap();
         let mut channel = session.open_channel(1).unwrap();
 
         channel
