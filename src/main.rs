@@ -33,6 +33,19 @@ fn an_hour_has_passed(found_timestamp_key: String) -> bool {
     return false;
 }
 
+fn send_message_to_rabbitmq_and_delete_timestamp_key(key: String, timestamp_key: String) {
+    services::rabbimq::send_message(
+        QUEUE_NAME,
+        format!(
+            "{}:{}",
+            key.clone(),
+            services::redis::get_key_value(key.clone()),
+        )
+        .as_str(),
+    );
+    services::redis::delete_key(timestamp_key);
+}
+
 async fn func(event: LambdaEvent<PulseData>) -> Result<Value, Error> {
     let pulse_data: PulseData = event.payload;
 
@@ -53,17 +66,12 @@ async fn func(event: LambdaEvent<PulseData>) -> Result<Value, Error> {
         );
     } else {
         services::redis::increment_key(usage_key.clone(), pulse_data.used_amount.to_string());
+
         if an_hour_has_passed(found_timestamp_key.clone()) {
-            services::rabbimq::send_message(
-                QUEUE_NAME,
-                format!(
-                    "{}:{}",
-                    usage_key.clone(),
-                    services::redis::get_key_value(usage_key.clone()),
-                )
-                .as_str(),
+            send_message_to_rabbitmq_and_delete_timestamp_key(
+                usage_key.clone(),
+                found_timestamp_key.clone(),
             );
-            services::redis::delete_key(found_timestamp_key);
         }
     }
 
