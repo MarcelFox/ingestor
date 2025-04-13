@@ -57,8 +57,11 @@ pub mod rabbimq {
     pub fn send_message(queue_name: &str, message: &str) {
         let rabbit_url: String =
             env::var("RABBITMQ_URL").unwrap_or("amqp://admin:admin@localhost:5672".to_string());
-        let mut session = Session::open_url(&rabbit_url).unwrap();
-        let mut channel = session.open_channel(1).unwrap();
+        let mut session = match Session::open_url(&rabbit_url) {
+            Ok(session) => session,
+            Err(err) => panic!("Cannot create session: {:?}", err),
+        };
+        let mut channel = session.open_channel(1).ok().expect("Can't open channel");
 
         channel
             .queue_declare(queue_name, false, true, false, false, false, Table::new())
@@ -77,5 +80,7 @@ pub mod rabbimq {
                 message.as_bytes().to_vec(),
             )
             .unwrap();
+        channel.close(200, "Bye").unwrap();
+        session.close(200, "Good Bye");
     }
 }
