@@ -1,5 +1,6 @@
 services:
-  lambda:
+  ingestor:
+    container_name: ingestor
     build:
       context: .
       dockerfile: Dockerfile
