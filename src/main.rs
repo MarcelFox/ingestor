@@ -80,6 +80,7 @@ async fn func(event: LambdaEvent<PulseData>) -> Result<Value, Error> {
                 usage_key.clone(),
                 found_timestamp_key.clone(),
             );
+            services::http::post().await.unwrap();
         }
     }
 

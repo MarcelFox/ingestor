@@ -84,3 +84,27 @@ pub mod rabbimq {
         session.close(200, "Good Bye");
     }
 }
+
+pub mod http {
+    use std::env;
+
+    pub async fn post() -> Result<(), Box<dyn std::error::Error>> {
+        use std::collections::HashMap;
+
+        let mut map = HashMap::new();
+        map.insert("message", "sending");
+
+        let client = reqwest::Client::new();
+        let resp = match client
+            .post(env::var("PROCESSOR_URL").unwrap_or("http://localhost:9000".to_string()))
+            .header("Content-Type", "application/json")
+            .json(&map)
+            .send()
+            .await {
+                Ok(resp) => resp,
+                Err(err) => panic!("Cannot send request: {:?}", err),
+            };
+        log::info!("{resp:#?}");
+        Ok(())
+    }
+}
